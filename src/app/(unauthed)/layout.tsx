@@ -10,7 +10,7 @@ export default function UnauthedLayout({ children }: PropsWithChildren) {
   ];
 
   return (
-    <BodyWrapper className="bg-dark flex min-h-screen flex-col">
+    <BodyWrapper className="bg-dark text-light flex min-h-screen flex-col">
       <div className="py-5">
         <FloatingNavbar links={links} />
       </div>
