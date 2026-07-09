@@ -1,7 +1,9 @@
 import Link from "next/link";
-import type { ComponentProps } from "react";
+import { useRef, type ComponentProps } from "react";
 
 export default function MouseDownLink(props: ComponentProps<typeof Link>) {
+  const shouldTrigger = useRef(false);
+
   return (
     <Link
       {...props}
@@ -10,9 +12,18 @@ export default function MouseDownLink(props: ComponentProps<typeof Link>) {
         if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
 
         e.preventDefault();
+        shouldTrigger.current = true;
         e.currentTarget.click();
 
         props.onMouseDown?.(e);
+      }}
+      onClick={(e) => {
+        if (shouldTrigger.current) {
+          shouldTrigger.current = false;
+          props.onClick?.(e);
+          return;
+        }
+        e.preventDefault();
       }}
     />
   );

@@ -1,10 +1,15 @@
-import { useEffect, useRef, type PropsWithChildren } from "react";
+"use client";
+import { useEffect, useRef, type ReactElement } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
+import type { ClassNameValue } from "tailwind-merge";
+import { cn } from "~/lib/utils";
 
 interface Props {
   maxStretchDistance?: number; // default 20
   maxStretchScale?: number; // default 0.1
   baseStretchScale?: number; // default 1.05
+  children: ReactElement;
+  className?: ClassNameValue;
 }
 
 export default function FluidComponent({
@@ -12,7 +17,8 @@ export default function FluidComponent({
   maxStretchDistance,
   maxStretchScale,
   baseStretchScale,
-}: PropsWithChildren & Props) {
+  className,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const scaleXTarget = useMotionValue(1);
@@ -36,11 +42,11 @@ export default function FluidComponent({
 
     const baseScale = baseStretchScale ?? 1.05;
     const maxExtraScale = maxStretchScale ?? 0.1;
-    const maxTaper = maxStretchDistance ?? 20;
+    const maxTaper = maxStretchDistance ?? 50;
     const distanceSensitivity = 150;
 
     // The minimum time (in milliseconds) the stretch effect should last
-    const minAnimationDuration = 200;
+    const minAnimationDuration = 50;
 
     const calculateScale = (x: number, y: number) => {
       const rect = container.getBoundingClientRect();
@@ -126,7 +132,10 @@ export default function FluidComponent({
       }
     };
 
-    container.addEventListener("pointerdown", handlePointerDown);
+    (container.children[0] as HTMLElement).addEventListener(
+      "pointerdown",
+      handlePointerDown,
+    );
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
 
@@ -134,7 +143,10 @@ export default function FluidComponent({
       if (releaseTimeout.current) clearTimeout(releaseTimeout.current);
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      container.removeEventListener("pointerdown", handlePointerDown);
+      (container.children[0] as HTMLElement).removeEventListener(
+        "pointerdown",
+        handlePointerDown,
+      );
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
@@ -150,7 +162,7 @@ export default function FluidComponent({
     <motion.div
       ref={containerRef}
       style={{ scaleX: smoothScaleX, scaleY: smoothScaleY }}
-      className="h-fit w-fit touch-none select-none"
+      className={cn("h-fit w-fit touch-none select-none", className)}
     >
       {children}
     </motion.div>
