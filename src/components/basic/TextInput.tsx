@@ -1,49 +1,61 @@
+import { useRef } from "react";
+import type { UseFormReturn } from "~/hooks/useForm";
 import { cn } from "~/lib/utils";
 
-interface Props {
+interface Props<T extends Record<string, string>> {
   label: string;
+  formKey: Extract<keyof T, string>;
+  form: UseFormReturn<T>;
   type?: string;
-  error?: string;
-  value: string;
-  setValue: (value: string) => void;
 }
 
-export default function TextInput({
+export default function TextInput<T extends Record<string, string>>({
+  form,
   label,
   type,
-  error,
-  value,
-  setValue,
-}: Props) {
+  formKey,
+}: Props<T>) {
+  const error = form.error[formKey];
+
+  const prevValue = useRef<string>(null);
+
   return (
     <div className="group-input relative w-full pt-5">
       <input
         className={cn(
-          "border-dark text-dark peer w-full rounded-sm border p-2",
+          "border-dark text-dark peer focus:ring-primary h-11 w-full rounded-sm border p-2 transition outline-none focus:ring-1",
           {
-            "border-red-500": error,
+            "animate-shake border-red-500": error,
           },
         )}
-        id={label}
+        id={formKey}
         placeholder=""
         type={type ?? "text"}
-        value={value}
+        value={form.value[formKey]}
         onChange={(e) => {
-          setValue(e.target.value);
+          form.setValue(formKey, e.target.value);
+        }}
+        onFocus={(e) => {
+          prevValue.current = e.target.value;
+        }}
+        onBlur={(e) => {
+          if (e.target.value != prevValue.current) {
+            form.setError(formKey, null);
+          }
         }}
       />
       <label
-        htmlFor={label}
+        htmlFor={formKey}
         className={cn(
-          "pointer-events-none absolute top-0 left-0 translate-x-2 translate-y-7 text-gray-500 transition-transform select-none not-peer-placeholder-shown:pointer-events-auto not-peer-placeholder-shown:translate-x-0 not-peer-placeholder-shown:translate-y-0 not-peer-placeholder-shown:text-sm peer-focus:pointer-events-auto peer-focus:translate-x-0 peer-focus:translate-y-0 peer-focus:text-sm",
+          "pointer-events-none absolute top-0 left-0 translate-x-2.5 translate-y-7.5 text-gray-500 transition-transform select-none not-peer-placeholder-shown:pointer-events-auto not-peer-placeholder-shown:translate-x-0 not-peer-placeholder-shown:translate-y-0 not-peer-placeholder-shown:text-sm not-peer-placeholder-shown:select-auto peer-focus:pointer-events-auto peer-focus:translate-x-0 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:select-auto",
           {
-            "text-red-500": error,
+            "pointer-events-auto translate-x-0 translate-y-0 text-sm text-red-500 select-auto":
+              error,
           },
         )}
       >
-        {label}
+        <span>{error ?? label}</span>
       </label>
-      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }

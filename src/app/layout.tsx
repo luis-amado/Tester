@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 import Script from "next/script";
+import { MotionConfig } from "framer-motion";
 
 export const metadata: Metadata = {
   title: "Tester",
@@ -20,7 +21,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      {children}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </html>
   );
 }

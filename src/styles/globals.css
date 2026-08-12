@@ -8,8 +8,24 @@
   --color-light: #F5F0F6;
   --color-accent: #D7B377;
   --color-dark-accent: #8F754F;
+
+  --animate-shake: shake 300ms ease-in-out forwards;
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25%,
+    75% {
+      transform: translateX(8px);
+    }
+    50% {
+      transform: translateX(-8px);
+    }
+  }
 }
 
 html {
-  scrollbar-gutter: stable;
+  /* scrollbar-gutter: stable; */
 }

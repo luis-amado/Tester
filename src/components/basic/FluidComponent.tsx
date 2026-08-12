@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef, type ReactElement } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+} from "framer-motion";
 import type { ClassNameValue } from "tailwind-merge";
 import { cn } from "~/lib/utils";
 
@@ -10,6 +15,7 @@ interface Props {
   baseStretchScale?: number; // default 1.05
   children: ReactElement;
   className?: ClassNameValue;
+  activeClassName?: ClassNameValue;
 }
 
 export default function FluidComponent({
@@ -18,8 +24,10 @@ export default function FluidComponent({
   maxStretchScale,
   baseStretchScale,
   className,
+  activeClassName,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const nonActiveClassName = useRef<string>("");
 
   const scaleXTarget = useMotionValue(1);
   const scaleYTarget = useMotionValue(1);
@@ -34,11 +42,15 @@ export default function FluidComponent({
   const clickStartTime = useRef(0);
   const releaseTimeout = useRef<number | null>(null);
 
+  const reducedMotion = useReducedMotion();
+
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reducedMotion) return;
 
     const container = containerRef.current;
     if (!container) return;
+    const child = container.children[0];
+    if (!child) return;
 
     const baseScale = baseStretchScale ?? 1.05;
     const maxExtraScale = maxStretchScale ?? 0.1;
@@ -46,7 +58,7 @@ export default function FluidComponent({
     const distanceSensitivity = 150;
 
     // The minimum time (in milliseconds) the stretch effect should last
-    const minAnimationDuration = 50;
+    const minAnimationDuration = 150;
 
     const calculateScale = (x: number, y: number) => {
       const rect = container.getBoundingClientRect();
@@ -107,11 +119,20 @@ export default function FluidComponent({
       isPressed.current = true;
 
       handlePointerMove(e); // Ensure origin is calculated immediately
+
+      if (nonActiveClassName.current == "") {
+        nonActiveClassName.current = child.className;
+      }
+      child.className = cn(nonActiveClassName.current, activeClassName);
     };
 
     const triggerRelease = () => {
       scaleXTarget.set(1);
       scaleYTarget.set(1);
+
+      if (nonActiveClassName.current != "") {
+        child.className = nonActiveClassName.current;
+      }
     };
 
     const handlePointerUp = () => {
@@ -136,6 +157,7 @@ export default function FluidComponent({
       "pointerdown",
       handlePointerDown,
     );
+    console.log(container.children[0]);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
 
@@ -156,6 +178,8 @@ export default function FluidComponent({
     baseStretchScale,
     maxStretchScale,
     maxStretchDistance,
+    activeClassName,
+    reducedMotion,
   ]);
 
   return (

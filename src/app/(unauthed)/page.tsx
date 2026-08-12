@@ -1,11 +1,5 @@
-import FluidComponent from "~/components/FluidComponent";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <main className="h-full text-left">
-      <FluidComponent>
-        <p>What, is this it?</p>
-      </FluidComponent>
-    </main>
-  );
+  redirect("/login");
 }

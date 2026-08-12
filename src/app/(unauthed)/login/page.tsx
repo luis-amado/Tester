@@ -1,69 +1,82 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import TextInput from "~/components/basic/TextInput";
-import FluidComponent from "~/components/FluidComponent";
+import useForm from "~/hooks/useForm";
+import FluidButton from "~/components/basic/FluidButton";
+import z from "zod";
+import { useLoginMutation } from "~/hooks/authMutations";
+import { handleSignInError } from "~/server/utils/clientAuthUtils";
+import { useEffect } from "react";
 
-export default function Page() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+export default function LogInPage() {
+  const form = useForm(loginSchema);
 
-  function login() {
-    if (username === "") {
-      setUsernameError("You must enter a username");
+  const router = useRouter();
+  const loginMutation = useLoginMutation();
+  const searchParams = useSearchParams();
+
+  const { setError } = form;
+
+  useEffect(() => {
+    const err = searchParams.get("err");
+
+    if (err === "not_signed_in") {
+      setError(
+        "main",
+        "Account created, but failed to sign in. Please try again manually.",
+      );
+      window.history.replaceState({}, "", window.location.pathname);
     }
-    if (password === "") {
-      setPasswordError("You must enter a password");
-    }
+  }, [setError, searchParams, router]);
+
+  async function login() {
+    if (!form.validate()) return;
+
+    const result = await loginMutation.mutateAsync(form.value);
+    if (!handleSignInError(result, form)) return;
+
+    router.push("/dashboard");
   }
 
   return (
     <main className="flex grow flex-col items-center justify-center">
-      <div className="bg-light text-dark flex w-full max-w-100 flex-col gap-2 rounded-xl p-8 shadow-md">
+      <div className="bg-light text-dark flex w-full max-w-110 flex-col gap-3 rounded-xl p-8 shadow-md">
         <div>
+          <h3 className="text-primary mb-3 text-lg font-black">TESTER</h3>
           <h2 className="text-3xl font-bold">Log in</h2>
           <p>Enter your account information.</p>
         </div>
-        <TextInput
-          label="Username"
-          value={username}
-          setValue={(val) => {
-            setUsername(val);
-            setUsernameError("");
-          }}
-          error={usernameError ?? ""}
-        />
+        <TextInput label="Username" form={form} formKey="username" />
         <TextInput
           label="Password"
+          form={form}
+          formKey="password"
           type="password"
-          value={password}
-          setValue={(val) => {
-            setPassword(val);
-            setPasswordError("");
-          }}
-          error={passwordError ?? ""}
         />
-        <div className="mt-4 w-full">
-          <FluidComponent
-            className="w-full"
-            maxStretchDistance={1}
-            maxStretchScale={0}
-          >
-            <button
-              className="bg-dark text-light hover:bg-dark/90 w-full cursor-pointer rounded-md p-2 transition"
+        <div className="mt-6 w-full">
+          {form.error.main && (
+            <p className="mb-2 text-red-500">{form.error.main}</p>
+          )}
+          <div className="w-full">
+            <FluidButton
+              loading={loginMutation.isPending}
+              className="w-full"
               onClick={login}
             >
               Log in
-            </button>
-          </FluidComponent>
+            </FluidButton>
+          </div>
+          <Link className="w-fit text-sm" href="/signup">
+            Don&apos;t have an account?
+          </Link>
         </div>
-        <Link className="w-full text-sm" href="/signup">
-          Don&apos;t have an account?
-        </Link>
       </div>
     </main>
   );
